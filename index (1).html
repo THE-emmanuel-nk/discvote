@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DISCVOTE</title>
+<meta name="description" content="Vote pour les meilleurs artistes de Côte d'Ivoire.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: une colonne mobile, en-tête avec compte à rebours, onglets Voter / Proposer / Admin, liste classée avec podium au-dessus. */
+:root{
+  --bg:#F2F4F0; --surface:#FFFFFF; --fg:#141915; --muted:#58645C; --line:#DADFD7; --tint:#E7ECE4;
+  --orange:#C45200; --on-orange:#FFFFFF; --green:#0A7A44; --danger:#B3261E;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1310; --surface:#161D18; --fg:#EEF2EC; --muted:#9AA79E; --line:#26302A; --tint:#1D2620;
+    --orange:#FF8A2B; --on-orange:#1A0E00; --green:#3DBE82; --danger:#FF8A80; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1310; --surface:#161D18; --fg:#EEF2EC; --muted:#9AA79E; --line:#26302A; --tint:#1D2620;
+  --orange:#FF8A2B; --on-orange:#1A0E00; --green:#3DBE82; --danger:#FF8A80; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;
+  padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:38px;height:38px;flex:none}
+.wordmark{font-family:var(--display);font-weight:800;font-size:28px;letter-spacing:-.02em;line-height:1}
+.wordmark b{color:var(--orange);font-weight:800}
+.clock{font-size:13px;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-variant-numeric:tabular-nums}
+.clock.live{color:var(--green)}
+.stripe{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--orange) 0 33.3%,var(--surface) 33.3% 66.6%,var(--green) 66.6%);border:1px solid var(--line)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tab{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.notice{margin:0;padding:12px 14px;border-radius:10px;background:var(--tint);border:1px solid var(--line);font-size:14px}
+.tools{display:flex;flex-direction:column;gap:10px}
+.field{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;min-width:0}
+textarea.field{resize:vertical;min-height:84px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chip{flex:none;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 13px;font-size:14px;font-weight:600;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:var(--on-orange)}
+h2{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-family:var(--display);font-weight:700;font-size:17px;margin:0;text-wrap:balance}
+.sub{margin:0;color:var(--muted);font-size:14px}
+.label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+/* podium */
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:8px;align-items:end}
+.pod{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.pod .nm{font-weight:700;font-size:14px;max-width:100%;overflow-wrap:anywhere;line-height:1.2}
+.pod .ph{width:100%;max-width:92px}
+.pod.p1 .ph{max-width:112px;box-shadow:0 0 0 3px var(--orange),0 0 0 7px var(--tint)}
+.block{width:100%;border-radius:10px 10px 0 0;background:var(--tint);border:1px solid var(--line);border-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;font-family:var(--display);font-weight:800}
+.p1 .block{height:78px;background:var(--orange);color:var(--on-orange);border-color:var(--orange)}
+.p2 .block{height:56px}.p3 .block{height:42px}
+.block .rk{font-size:26px;line-height:1}
+.block .vt{font-size:12px;font-family:var(--body);font-weight:700;font-variant-numeric:tabular-nums}
+/* photos */
+.ph{aspect-ratio:1;border-radius:50%;object-fit:cover;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;color:var(--on-orange);background:var(--orange);flex:none}
+.ph.c1{background:var(--green);color:#fff}
+.ph.c2{background:var(--fg);color:var(--bg)}
+/* list */
+.list{display:flex;flex-direction:column;gap:10px}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.row.mine{border-color:var(--green);box-shadow:inset 3px 0 0 var(--green)}
+.main{display:grid;grid-template-columns:26px 54px minmax(0,1fr) auto;gap:10px;align-items:center}
+.rank{font-family:var(--display);font-weight:800;font-size:22px;text-align:center;color:var(--muted)}
+.rank.top{color:var(--orange)}
+.main .ph{width:54px}
+.info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.name{font-weight:700;overflow-wrap:anywhere;line-height:1.2}
+.cat{font-size:13px;color:var(--muted)}
+.bar{height:6px;border-radius:3px;background:var(--tint);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--orange);border-radius:3px;min-width:0;transition:width .4s}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.count{font-family:var(--display);font-weight:800;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.count small{display:block;font-family:var(--body);font-size:11px;font-weight:600;color:var(--muted);text-align:right}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;background:var(--orange);color:var(--on-orange);min-height:40px}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:14px}
+.btn.danger{background:var(--danger);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--green);color:#fff;white-space:nowrap}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.panel{border-top:1px dashed var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px;font-size:15px}
+.panel p{margin:0;overflow-wrap:anywhere}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.links a{color:var(--fg);font-weight:600;font-size:14px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;text-decoration:none}
+.links a:hover{border-color:var(--orange)}
+.empty{border:1px dashed var(--line);border-radius:14px;padding:24px 16px;text-align:center;color:var(--muted)}
+.empty strong{display:block;color:var(--fg);font-family:var(--display);font-size:18px;margin-bottom:4px}
+/* forms */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+form{display:flex;flex-direction:column;gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:var(--tint);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-family:var(--display);font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.days{display:flex;align-items:flex-end;gap:6px;height:110px}
+.day{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;min-width:0;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.day i{display:block;width:100%;background:var(--green);border-radius:4px 4px 0 0;min-height:2px}
+.arow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
+.arow:first-child{border-top:0}
+.arow>div:first-child{min-width:0;flex:1 1 160px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px);text-align:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.bar i,#toast{transition:none}}
+@media (max-width:380px){.main{grid-template-columns:22px 46px minmax(0,1fr) auto;gap:8px}.main .ph{width:46px}.count{font-size:20px}}
+html{color-scheme:light dark}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="var(--fg)"/><circle cx="20" cy="20" r="14" fill="none" stroke="var(--bg)" stroke-opacity=".35" stroke-width=".8"/><circle cx="20" cy="20" r="10.5" fill="none" stroke="var(--bg)" stroke-opacity=".35" stroke-width=".8"/><circle cx="20" cy="20" r="6.5" fill="var(--orange)"/><circle cx="20" cy="20" r="1.6" fill="var(--bg)"/></svg>
+      <span class="wordmark">DISC<b>VOTE</b></span>
+    </div>
+    <div class="clock" id="clock">Chargement…</div>
+  </header>
+  <div class="stripe" aria-hidden="true"></div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  <p id="notice" class="notice" hidden></p>
+
+  <section id="v-vote" class="wrap" style="gap:14px">
+    <div class="tools">
+      <input class="field" id="q" type="search" placeholder="Chercher un artiste" autocomplete="off">
+      <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+    </div>
+    <div id="podium"></div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section id="v-suggest" class="wrap" style="gap:14px" hidden>
+    <div class="card">
+      <h2>Proposer un artiste</h2>
+      <p class="sub">Dis-nous qui manque. Seul l'organisateur lit les propositions et décide de les ajouter.</p>
+      <form id="sg-form">
+        <label>Nom de l'artiste<input class="field" id="sg-name" required maxlength="80"></label>
+        <label>Catégorie<select class="field" id="sg-cat"></select></label>
+        <label>Pourquoi lui ou elle ? (facultatif)<textarea class="field" id="sg-note" maxlength="300"></textarea></label>
+        <button class="btn" type="submit" id="sg-btn">Envoyer la proposition</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="v-admin" class="wrap" style="gap:14px" hidden>
+    <div class="card" id="login">
+      <h2>Connexion organisateur</h2>
+      <form id="login-form">
+        <label>Email<input class="field" id="l-email" type="email" required autocomplete="username"></label>
+        <label>Mot de passe<input class="field" id="l-pass" type="password" required autocomplete="current-password"></label>
+        <button class="btn" type="submit" id="l-btn">Se connecter</button>
+      </form>
+    </div>
+
+    <div id="panel" class="wrap" style="gap:14px" hidden>
+      <div class="card"><h2>Statistiques</h2><div id="a-stats"></div></div>
+
+      <div class="card">
+        <h2 id="af-title">Ajouter un artiste</h2>
+        <form id="af-form">
+          <label>Nom<input class="field" id="f-name" required maxlength="80"></label>
+          <label>Catégorie<select class="field" id="f-cat" required></select></label>
+          <label id="f-newcat-wrap" hidden>Nouvelle catégorie<input class="field" id="f-newcat" maxlength="40"></label>
+          <label>Photo<input class="field" id="f-photo" type="file" accept="image/*"></label>
+          <p class="hint">La photo est réduite avant l'envoi pour rester légère sur les connexions lentes.</p>
+          <label>Biographie<textarea class="field" id="f-bio" maxlength="600"></textarea></label>
+          <div class="two">
+            <label>Instagram<input class="field" id="f-ig" placeholder="https://instagram.com/…"></label>
+            <label>TikTok<input class="field" id="f-tt" placeholder="https://tiktok.com/@…"></label>
+            <label>YouTube<input class="field" id="f-yt" placeholder="https://youtube.com/…"></label>
+            <label>Extrait à écouter<input class="field" id="f-ls" placeholder="Lien Spotify, Audiomack…"></label>
+          </div>
+          <div class="acts">
+            <button class="btn" type="submit" id="f-btn">Ajouter l'artiste</button>
+            <button class="btn alt" type="button" id="f-cancel" hidden>Annuler la modification</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card"><h2>Artistes</h2><div id="a-artists"></div></div>
+      <div class="card"><h2>Propositions des visiteurs</h2><div id="a-sugg"></div></div>
+
+      <div class="card">
+        <h2>Fin du vote</h2>
+        <p class="sub">Après cette date, plus personne ne peut voter et le podium devient la liste des gagnants.</p>
+        <form id="end-form" class="acts" style="flex-direction:row">
+          <input class="field" id="end-at" type="datetime-local" style="flex:1 1 200px;width:auto">
+          <button class="btn" type="submit">Enregistrer</button>
+          <button class="btn alt" type="button" id="end-clear">Pas de date</button>
+        </form>
+      </div>
+
+      <button class="btn alt" id="logout" type="button">Se déconnecter</button>
+    </div>
+  </section>
+
+  <p class="hint" style="text-align:center">Un vote par appareil. Les résultats se mettent à jour toutes les 10 secondes.</p>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+"use strict";
+var SB_URL="https://wrvzmttdkpszqwtajwjz.supabase.co";
+var SB_KEY="sb_publishable_VycMb32P-7vzkVfmlrBOww_fkbnB76V";
+var DEFAULT_CATS=["Rap / Hip-hop","Coupé-décalé","Zouglou","Gospel","Afrobeat / Afro-pop","Reggae / Zouk","Rumba / Traditionnel"];
+var sb=window.supabase.createClient(SB_URL,SB_KEY);
+var S={user:null,admin:false,artists:[],my:null,endsAt:null,suggestions:[],votesRaw:[],cat:"all",q:"",
+  tab:"vote",open:null,confirm:null,delConfirm:null,editId:null,loaded:false,slow:false,err:false,authErr:false};
+function $(s){return document.querySelector(s)}
+function h(tag,props){
+  var e=document.createElement(tag);
+  for(var k in (props||{})){var v=props[k];if(v==null||v===false)continue;
+    if(k==="class")e.className=v;else if(k.indexOf("on")===0)e.addEventListener(k.slice(2),v);
+    else e.setAttribute(k,v===true?"":v);}
+  for(var i=2;i<arguments.length;i++){var c=arguments[i];
+    (Array.isArray(c)?c:[c]).forEach(function(x){if(x==null||x===false)return;e.append(x.nodeType?x:document.createTextNode(String(x)));});}
+  return e;
+}
+function norm(s){return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()}
+function safeUrl(u){
+  u=String(u||"").trim();if(!u)return null;
+  if(!/^https?:\/\//i.test(u))u="https://"+u;
+  try{var x=new URL(u);return(x.protocol==="https:"||x.protocol==="http:")?x.href:null}catch(e){return null}
+}
+var tt;function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("on")},3200)}
+function cats(){var s=DEFAULT_CATS.slice();S.artists.forEach(function(a){if(a.category&&s.indexOf(a.category)<0)s.push(a.category)});return s}
+function closed(){return !!S.endsAt&&Date.now()>=Date.parse(S.endsAt)}
+function initials(n){return String(n).trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||""}).join("").toUpperCase()}
+function avatar(a,cls){
+  if(a.photo_url){return h("img",{class:"ph "+(cls||""),src:a.photo_url,alt:a.name,loading:"lazy",width:"96",height:"96"})}
+  var c=(a.name||"").length%3;
+  return h("div",{class:"ph c"+c+" "+(cls||""),"aria-hidden":"true",style:"font-size:20px"},initials(a.name));
+}
+function sorted(list){return list.slice().sort(function(a,b){return b.votes-a.votes||norm(a.name).localeCompare(norm(b.name))})}
+
+/* ---------- en-tête / onglets ---------- */
+function renderClock(){
+  var el=$("#clock"),e=S.endsAt;
+  if(!e){el.textContent="Vote ouvert";el.className="clock live";return}
+  var ms=Date.parse(e)-Date.now();
+  if(ms<=0){el.textContent="Vote terminé";el.className="clock";return}
+  var s=Math.floor(ms/1000),d=Math.floor(s/86400),hh=Math.floor(s%86400/3600),m=Math.floor(s%3600/60),ss=s%60;
+  function p(n){return String(n).padStart(2,"0")}
+  el.textContent="Fin dans "+(d?d+"j ":"")+p(hh)+"h "+p(m)+"m "+p(ss)+"s";el.className="clock live";
+}
+function renderTabs(){
+  var t=$("#tabs");t.replaceChildren();
+  var items=[["vote","Voter"],["suggest","Proposer"]];if(S.admin)items.push(["admin","Admin"]);
+  items.forEach(function(it){
+    t.append(h("button",{class:"tab",role:"tab","aria-selected":String(S.tab===it[0]),onclick:function(){S.tab=it[0];showTab()}},it[1]));
+  });
+}
+function showTab(){
+  ["vote","suggest","admin"].forEach(function(k){$("#v-"+k).hidden=S.tab!==k});
+  renderTabs();
+  if(S.tab==="admin"){$("#login").hidden=S.admin;$("#panel").hidden=!S.admin;if(S.admin)renderAdmin()}
+}
+function renderNotice(){
+  var n=$("#notice"),msg="";
+  if(S.authErr)msg="Impossible de t'identifier pour voter. Recharge la page.";
+  else if(S.err)msg="Connexion difficile. Les chiffres peuvent ne pas être à jour.";
+  else if(S.slow&&!S.loaded)msg="Connexion lente : les artistes arrivent, patiente quelques secondes.";
+  else if(closed())msg="Le vote est terminé. Merci à tous les votants.";
+  n.hidden=!msg;n.textContent=msg;
+}
+
+/* ---------- vote ---------- */
+function renderChips(){
+  var c=$("#chips");c.replaceChildren();
+  var all=[["all","Tous"]].concat(cats().map(function(x){return[x,x]}));
+  all.forEach(function(it){
+    c.append(h("button",{class:"chip","aria-pressed":String(S.cat===it[0]),type:"button",onclick:function(){S.cat=it[0];renderChips();renderMain()}},it[1]));
+  });
+  var sg=$("#sg-cat"),sgv=sg.value;sg.replaceChildren();
+  cats().forEach(function(x){sg.append(h("option",{value:x},x))});
+  if(sgv&&cats().indexOf(sgv)>-1)sg.value=sgv;
+  var fc=$("#f-cat"),fv=fc.value;fc.replaceChildren();
+  cats().forEach(function(x){fc.append(h("option",{value:x},x))});
+  fc.append(h("option",{value:"__new__"},"Autre catégorie…"));
+  if(fv&&(cats().indexOf(fv)>-1||fv==="__new__"))fc.value=fv;
+}
+function filtered(){
+  return S.artists.filter(function(a){
+    return(S.cat==="all"||a.category===S.cat)&&(!S.q||norm(a.name).indexOf(norm(S.q))>-1);
+  });
+}
+function renderPodium(list){
+  var P=$("#podium");P.replaceChildren();
+  if(S.q)return;
+  var top=sorted(list).filter(function(a){return a.votes>0}).slice(0,3);
+  if(!top.length)return;
+  var head=h("div",{style:"display:flex;flex-direction:column;gap:2px;margin-bottom:10px"},
+    h("span",{class:"label"},closed()?"Gagnants":"Podium"),
+    h("h2",null,S.cat==="all"?"Les mieux classés":S.cat));
+  var g=h("div",{class:"podium"});
+  [1,0,2].filter(function(i){return top[i]}).forEach(function(i){
+    var a=top[i];
+    g.append(h("div",{class:"pod p"+(i+1)},avatar(a),h("div",{class:"nm"},a.name),
+      h("div",{class:"block"},h("span",{class:"rk"},i+1),h("span",{class:"vt"},a.votes+(a.votes===1?" vote":" votes")))));
+  });
+  P.append(head,g);
+}
+function voteBtn(a){
+  if(closed())return null;
+  if(S.my)return S.my===a.id?h("span",{class:"pill"},"Ton vote"):null;
+  if(S.confirm===a.id){
+    return h("div",{class:"acts",style:"justify-content:flex-end"},
+      h("button",{class:"btn sm",onclick:function(){castVote(a)}},"Confirmer"),
+      h("button",{class:"btn alt sm",onclick:function(){S.confirm=null;renderList()}},"Annuler"));
+  }
+  return h("button",{class:"btn sm",onclick:function(){
+    if(!S.user){toast("Impossible de t'identifier. Recharge la page.");return}
+    S.confirm=a.id;renderList();
+  }},"Voter");
+}
+function panelFor(a){
+  var links=[["Instagram",a.instagram],["TikTok",a.tiktok],["YouTube",a.youtube],["Écouter un extrait",a.listen]]
+    .map(function(l){var u=safeUrl(l[1]);return u?h("a",{href:u,target:"_blank",rel:"noopener noreferrer"},l[0]):null}).filter(Boolean);
+  var wa="https://wa.me/?text="+encodeURIComponent("Je soutiens "+a.name+" sur DISCVOTE. Vote ici : "+location.href.split("#")[0]);
+  return h("div",{class:"panel"},
+    a.bio?h("p",null,a.bio):h("p",{class:"cat"},"Pas encore de biographie."),
+    links.length?h("div",{class:"links"},links):null,
+    h("div",{class:"links"},h("a",{href:wa,target:"_blank",rel:"noopener noreferrer"},"Partager sur WhatsApp")));
+}
+function renderList(){
+  var L=$("#list");L.replaceChildren();
+  var list=filtered();
+  if(!S.loaded){L.append(h("div",{class:"empty"},h("strong",null,"Chargement des artistes"),"Les votes arrivent."));return}
+  if(!S.artists.length){
+    L.append(h("div",{class:"empty"},h("strong",null,"Aucun artiste pour l'instant"),
+      "Reviens bientôt, le vote ouvre dès que les artistes sont ajoutés."));return}
+  if(!list.length){L.append(h("div",{class:"empty"},h("strong",null,"Aucun résultat"),"Essaie un autre nom ou une autre catégorie."));return}
+  var ranked=sorted(list),max=Math.max(1,ranked[0].votes);
+  ranked.forEach(function(a,i){
+    var n=a.votes,open=S.open===a.id;
+    L.append(h("div",{class:"row"+(S.my===a.id?" mine":"")},
+      h("div",{class:"main"},
+        h("div",{class:"rank"+(i<3&&n>0?" top":"")},i+1),
+        avatar(a),
+        h("div",{class:"info"},h("div",{class:"name"},a.name),h("div",{class:"cat"},a.category),
+          h("div",{class:"bar"},h("i",{style:"width:"+Math.round(n/max*100)+"%"}))),
+        h("div",{class:"side"},h("div",{class:"count"},String(n),h("small",null,n===1?"vote":"votes")),voteBtn(a))),
+      h("div",{class:"acts"},
+        h("button",{class:"btn alt sm","aria-expanded":String(open),onclick:function(){S.open=open?null:a.id;renderList()}},open?"Masquer le profil":"Profil")),
+      open?panelFor(a):null));
+  });
+}
+function renderMain(){renderPodium(filtered());renderList()}
+
+async function castVote(a){
+  if(!S.user){toast("Impossible de t'identifier. Recharge la page.");return}
+  if(closed()){toast("Le vote est terminé.");return}
+  var r=await sb.from("votes").insert({artist_id:a.id});
+  S.confirm=null;
+  if(r.error){
+    if(r.error.code==="23505"){toast("Tu as déjà voté.");await loadMy()}
+    else if(r.error.code==="42501"){toast("Le vote est terminé.")}
+    else toast("Le vote a échoué. Vérifie ta connexion et réessaie.");
+    refresh();return;
+  }
+  S.my=a.id;toast("Vote enregistré pour "+a.name);
+  await loadArtists();refresh();
+}
+
+/* ---------- propositions ---------- */
+$("#sg-form").addEventListener("submit",async function(ev){
+  ev.preventDefault();var btn=$("#sg-btn");btn.disabled=true;
+  var r=await sb.from("suggestions").insert({name:$("#sg-name").value.trim(),category:$("#sg-cat").value,note:$("#sg-note").value.trim()});
+  if(r.error)toast("L'envoi a échoué. Réessaie.");
+  else{$("#sg-name").value="";$("#sg-note").value="";toast("Proposition envoyée. Merci !")}
+  btn.disabled=false;
+});
+
+/* ---------- admin ---------- */
+function renderAdmin(){
+  if(!S.admin)return;
+  var now=Date.now(),total=S.artists.reduce(function(s,a){return s+a.votes},0);
+  var S1=$("#a-stats");S1.replaceChildren();
+  var haveVotes=S.votesRaw.length>=total&&total>0;
+  var recent={};S.votesRaw.forEach(function(v){if(now-Date.parse(v.created_at)<864e5)recent[v.artist_id]=(recent[v.artist_id]||0)+1});
+  var rising=haveVotes?S.artists.map(function(a){return{a:a,n:recent[a.id]||0}}).sort(function(x,y){return y.n-x.n})[0]:null;
+  var days=[];for(var i=6;i>=0;i--)days.push(new Date(now-i*864e5).toISOString().slice(0,10));
+  var perDay=days.map(function(d){return S.votesRaw.filter(function(v){return v.created_at.slice(0,10)===d}).length});
+  var dm=Math.max(1,Math.max.apply(null,perDay));
+  var byCat=cats().map(function(c){return[c,S.artists.filter(function(a){return a.category===c}).reduce(function(s,a){return s+a.votes},0)]});
+  S1.append(h("div",{style:"display:flex;flex-direction:column;gap:14px"},
+    h("div",{class:"stats"},
+      h("div",{class:"stat"},h("b",null,String(total)),h("span",null,"votes au total")),
+      h("div",{class:"stat"},h("b",null,String(S.artists.length)),h("span",null,"artistes")),
+      h("div",{class:"stat"},h("b",null,rising&&rising.n?rising.a.name:"-"),h("span",null,rising&&rising.n?"monte le plus vite (+"+rising.n+" en 24 h)":"pas encore de vote en 24 h"))),
+    haveVotes||total===0?h("div",null,h("span",{class:"label"},"Votes par jour (7 derniers jours)"),
+      h("div",{class:"days",style:"margin-top:8px"},days.map(function(d,k){
+        return h("div",{class:"day"},h("span",null,String(perDay[k])),h("i",{style:"height:"+Math.round(perDay[k]/dm*80)+"px"}),h("span",null,d.slice(8)+"/"+d.slice(5,7)))}))):
+      h("p",{class:"hint"},"Les statistiques par jour demandent le SQL supplémentaire (lecture des votes par l'admin)."),
+    h("div",null,h("span",{class:"label"},"Votes par catégorie"),
+      h("div",{style:"margin-top:6px"},byCat.map(function(c){return h("div",{class:"arow"},h("div",null,c[0]),h("b",null,String(c[1])))})))));
+  var A=$("#a-artists");A.replaceChildren();
+  if(!S.artists.length)A.append(h("p",{class:"sub"},"Aucun artiste. Utilise le formulaire ci-dessus."));
+  sorted(S.artists).forEach(function(a){
+    var del=S.delConfirm===a.id;
+    A.append(h("div",{class:"arow"},
+      h("div",null,h("div",{class:"name"},a.name),h("div",{class:"cat"},a.category+" · "+a.votes+" votes")),
+      h("div",{class:"acts"},
+        h("button",{class:"btn alt sm",onclick:function(){editArtist(a)}},"Modifier"),
+        del?h("button",{class:"btn danger sm",onclick:function(){removeArtist(a)}},"Confirmer la suppression"):
+            h("button",{class:"btn alt sm",onclick:function(){S.delConfirm=a.id;renderAdmin()}},"Supprimer"))));
+  });
+  var G=$("#a-sugg");G.replaceChildren();
+  if(!S.suggestions.length)G.append(h("p",{class:"sub"},"Aucune proposition pour l'instant."));
+  S.suggestions.forEach(function(s){
+    G.append(h("div",{class:"arow"},
+      h("div",null,h("div",{class:"name"},s.name),h("div",{class:"cat"},s.category),s.note?h("div",{class:"cat"},s.note):null),
+      h("div",{class:"acts"},
+        h("button",{class:"btn sm",onclick:function(){prefill(s)}},"Ajouter"),
+        h("button",{class:"btn alt sm",onclick:function(){dropSuggestion(s)}},"Retirer"))));
+  });
+  var inp=$("#end-at");
+  if(document.activeElement!==inp&&S.endsAt){var d=new Date(S.endsAt);inp.value=new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
+}
+function prefill(s){
+  resetForm();$("#f-name").value=s.name;if(cats().indexOf(s.category)>-1)$("#f-cat").value=s.category;
+  $("#af-form").scrollIntoView({behavior:"smooth",block:"start"});toast("Ajoute la photo puis enregistre l'artiste.");
+}
+function resetForm(){
+  S.editId=null;$("#af-form").reset();$("#f-newcat-wrap").hidden=true;
+  $("#af-title").textContent="Ajouter un artiste";$("#f-btn").textContent="Ajouter l'artiste";$("#f-cancel").hidden=true;
+}
+function editArtist(a){
+  S.editId=a.id;$("#af-title").textContent="Modifier "+a.name;$("#f-btn").textContent="Enregistrer les modifications";$("#f-cancel").hidden=false;
+  $("#f-name").value=a.name||"";if(cats().indexOf(a.category)>-1)$("#f-cat").value=a.category;
+  $("#f-bio").value=a.bio||"";$("#f-ig").value=a.instagram||"";$("#f-tt").value=a.tiktok||"";$("#f-yt").value=a.youtube||"";$("#f-ls").value=a.listen||"";
+  $("#af-form").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("#f-cancel").addEventListener("click",resetForm);
+$("#f-cat").addEventListener("change",function(){$("#f-newcat-wrap").hidden=$("#f-cat").value!=="__new__"});
+async function compress(file){
+  var bmp=await createImageBitmap(file),max=640,r=Math.min(1,max/Math.max(bmp.width,bmp.height));
+  var c=document.createElement("canvas");c.width=Math.round(bmp.width*r);c.height=Math.round(bmp.height*r);
+  c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  return await new Promise(function(res){c.toBlob(res,"image/jpeg",0.78)});
+}
+$("#af-form").addEventListener("submit",async function(ev){
+  ev.preventDefault();if(!S.admin)return;
+  var btn=$("#f-btn");btn.disabled=true;
+  try{
+    var prev=S.editId?S.artists.filter(function(x){return x.id===S.editId})[0]:null;
+    var photo=prev&&prev.photo_url||null,file=$("#f-photo").files[0];
+    if(file){
+      var blob=await compress(file),path="a_"+Date.now()+".jpg";
+      var up=await sb.storage.from("photos").upload(path,blob,{contentType:"image/jpeg"});
+      if(up.error)throw up.error;
+      photo=sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    }
+    var cat=$("#f-cat").value;if(cat==="__new__")cat=$("#f-newcat").value.trim();
+    if(!cat){toast("Écris le nom de la catégorie.");btn.disabled=false;return}
+    var row={name:$("#f-name").value.trim(),category:cat,bio:$("#f-bio").value.trim(),
+      instagram:$("#f-ig").value.trim(),tiktok:$("#f-tt").value.trim(),youtube:$("#f-yt").value.trim(),listen:$("#f-ls").value.trim(),photo_url:photo};
+    var r=S.editId?await sb.from("artists").update(row).eq("id",S.editId):await sb.from("artists").insert(row);
+    if(r.error)throw r.error;
+    toast(S.editId?"Artiste modifié.":"Artiste ajouté.");resetForm();
+    await loadArtists();refresh();
+  }catch(e){toast("L'enregistrement a échoué. Réessaie.")}
+  btn.disabled=false;
+});
+async function removeArtist(a){
+  var r=await sb.from("artists").delete().eq("id",a.id);
+  S.delConfirm=null;
+  if(r.error)toast("La suppression a échoué.");else{toast("Artiste supprimé.");await loadArtists()}
+  refresh();
+}
+async function dropSuggestion(s){
+  var r=await sb.from("suggestions").delete().eq("id",s.id);
+  if(r.error){toast("Suppression impossible : exécute le SQL supplémentaire.");return}
+  S.suggestions=S.suggestions.filter(function(x){return x.id!==s.id});renderAdmin();
+}
+async function saveEnd(iso){
+  var r=await sb.from("settings").update({ends_at:iso}).eq("id",1);
+  if(r.error){toast("L'enregistrement a échoué.");return}
+  S.endsAt=iso;toast("Enregistré.");refresh();
+}
+$("#end-form").addEventListener("submit",function(ev){
+  ev.preventDefault();var v=$("#end-at").value;if(!v){toast("Choisis une date.");return}
+  saveEnd(new Date(v).toISOString());
+});
+$("#end-clear").addEventListener("click",function(){$("#end-at").value="";saveEnd(null)});
+
+$("#login-form").addEventListener("submit",async function(ev){
+  ev.preventDefault();var btn=$("#l-btn");btn.disabled=true;
+  var r=await sb.auth.signInWithPassword({email:$("#l-email").value.trim(),password:$("#l-pass").value});
+  btn.disabled=false;
+  if(r.error){toast("Email ou mot de passe incorrect.");return}
+  $("#l-pass").value="";
+  S.user=r.data.user;S.admin=true;S.my=null;
+  await loadAdmin();showTab();toast("Connecté.");
+});
+$("#logout").addEventListener("click",async function(){
+  await sb.auth.signOut();
+  var r=await sb.auth.signInAnonymously();
+  S.user=r.data&&r.data.user||null;S.admin=false;S.tab="vote";S.suggestions=[];S.votesRaw=[];
+  await loadMy();showTab();refresh();
+});
+
+/* ---------- chargement ---------- */
+async function loadArtists(){
+  var r=await sb.from("artist_votes").select("*");
+  if(r.error){S.err=true;return}
+  S.err=false;S.artists=r.data.map(function(a){a.votes=Number(a.votes)||0;return a});S.loaded=true;
+}
+async function loadSettings(){
+  var r=await sb.from("settings").select("ends_at").eq("id",1).maybeSingle();
+  if(!r.error&&r.data)S.endsAt=r.data.ends_at;
+}
+async function loadMy(){
+  S.my=null;if(!S.user)return;
+  var r=await sb.from("votes").select("artist_id").eq("user_id",S.user.id).maybeSingle();
+  if(!r.error&&r.data)S.my=r.data.artist_id;
+}
+async function loadAdmin(){
+  if(!S.admin)return;
+  var r=await sb.from("suggestions").select("*").order("created_at",{ascending:false}).limit(200);
+  S.suggestions=r.error?[]:r.data;
+  var all=[],from=0;
+  for(var i=0;i<5;i++){
+    var v=await sb.from("votes").select("artist_id,created_at").range(from,from+999);
+    if(v.error)break;all=all.concat(v.data);if(v.data.length<1000)break;from+=1000;
+  }
+  S.votesRaw=all;
+}
+function refresh(){renderNotice();renderClock();renderChips();renderMain();if(S.tab==="admin"&&S.admin)renderAdmin()}
+async function poll(){
+  if(document.hidden)return;
+  await Promise.all([loadArtists(),loadSettings()]);
+  if(S.admin)await loadAdmin();
+  refresh();
+}
+$("#q").addEventListener("input",function(e){S.q=e.target.value.trim();renderMain()});
+window.addEventListener("hashchange",function(){if(location.hash==="#admin"){S.tab="admin";showTab()}});
+
+async function init(){
+  S.tab=location.hash==="#admin"?"admin":"vote";
+  renderTabs();renderChips();renderMain();renderClock();setInterval(renderClock,1000);showTab();
+  var slow=setTimeout(function(){S.slow=true;renderNotice()},8000);
+  try{
+    var g=await sb.auth.getSession(),session=g.data&&g.data.session;
+    if(!session){
+      var a=await sb.auth.signInAnonymously();
+      if(a.error)S.authErr=true;else session=a.data.session;
+    }
+    S.user=session&&session.user||null;
+    S.admin=!!(S.user&&!S.user.is_anonymous);
+  }catch(e){S.authErr=true}
+  await Promise.all([loadArtists(),loadSettings(),loadMy()]);
+  if(S.admin)await loadAdmin();
+  clearTimeout(slow);S.slow=false;
+  renderTabs();showTab();refresh();
+  setInterval(poll,10000);
+}
+init();
+})();
+</script>
+</body>
+</html>
